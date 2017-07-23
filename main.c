@@ -9,7 +9,6 @@ int main(int argc, char *argv[])
     int i;
     int res;
     int dataAddr;
-    char *dev;			/* The device to sniff on */
     char errbuf[PCAP_ERRBUF_SIZE];	/* Error string */
     char filter_exp[] = "port 80";	/* The filter expression */
     struct bpf_program fp;		/* The compiled filter */
@@ -17,7 +16,6 @@ int main(int argc, char *argv[])
     struct ether_header *p_analyze;
     struct iphdr *ip_header;
     struct tcphdr *tcp_header;
-    bpf_u_int32 mask;		/* Our netmask */
     bpf_u_int32 net;		/* Our IP */
     pcap_t *handle;			/* Session handle */
     const u_char *pkt_data;
