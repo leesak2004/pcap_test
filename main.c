@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <net/ethernet.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 int main(int argc, char *argv[])
 {
@@ -28,13 +29,22 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Couldn't open device %s: %s\n", argv[1], errbuf);
         return(2);
     }
+    /* Compile and apply the filter */
+    if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
+        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+        return(2);
+    }
+    if (pcap_setfilter(handle, &fp) == -1) {
+        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
+        return(2);
+    }
     while(1){
         /* Grab a packet */
         res = pcap_next_ex(handle, &header, &pkt_data);
         p_analyze = (struct ether_header *) pkt_data;
         ip_header = (struct iphdr *)(pkt_data+sizeof(*p_analyze));
-        tcp_header = (struct tcphdr *)(pkt_data+sizeof(p_analyze)+((ip_header->ihl)*4));
-        if(res == 1)
+        tcp_header = (struct tcphdr *)(pkt_data+sizeof(*p_analyze)+((ip_header->ihl)*4));
+        if(res == 1 && ntohs(p_analyze->ether_type) == ETHERTYPE_IP)
             if(ntohs(p_analyze->ether_type) == ETHERTYPE_IP && ip_header->protocol == IPPROTO_TCP)
             {
                 printf("ETHERTYPE IS IP! and PROTOCOL IS TCP!\n");
@@ -51,7 +61,7 @@ int main(int argc, char *argv[])
                 for(i = 26; i < 30; i ++)
                     printf("%d.",*(pkt_data+i));
                 printf("\b \n");
-                printf("Port : %d\n",*(pkt_data+34)+*(pkt_data+35));
+                printf("Port : %d\n",ntohs(tcp_header->source));
                 printf("==================Destination=================\n");
                 printf("MAC Address : ");
                 for(i = 0; i < ETH_ALEN; i ++)
@@ -65,13 +75,13 @@ int main(int argc, char *argv[])
                 for(i = 30; i < 34; i ++)
                     printf("%d.",*(pkt_data+i));
                 printf("\b \n");
-                printf("Port : %d\n",*(pkt_data+36)+*(pkt_data+37));
+                printf("Port : %d\n",ntohs(tcp_header->dest));
                 printf("=====================Data=====================\n");
                 dataAddr = sizeof(p_analyze)+sizeof(tcp_header)+sizeof(ip_header);
                 printf("Data(Hex) : ");
                 for(i = dataAddr; i < header->len; i ++)
                 {
-                    printf("%X",*(pkt_data+i));
+                    printf("0x%02X",*(pkt_data+i));
                 }
                 printf("\n");
                 printf("Data(Char) : ");
