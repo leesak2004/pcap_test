@@ -22,25 +22,10 @@ int main(int argc, char *argv[])
     const u_char *pkt_data;
 
 
-    /* Find the properties for the device */
-    if (pcap_lookupnet(argv[1], &net, &mask, errbuf) == -1) {
-        fprintf(stderr, "Couldn't get netmask for device %s: %s\n", argv[1], errbuf);
-        net = 0;
-        mask = 0;
-    }
     /* Open the session in promiscuous mode */
     handle = pcap_open_live(argv[1], BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
         fprintf(stderr, "Couldn't open device %s: %s\n", argv[1], errbuf);
-        return(2);
-    }
-    /* Compile and apply the filter */
-    if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
-        return(2);
-    }
-    if (pcap_setfilter(handle, &fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
         return(2);
     }
     while(1){
@@ -49,7 +34,7 @@ int main(int argc, char *argv[])
         p_analyze = (struct ether_header *) pkt_data;
         ip_header = (struct iphdr *)(pkt_data+sizeof(*p_analyze));
         tcp_header = (struct tcphdr *)(pkt_data+sizeof(p_analyze)+((ip_header->ihl)*4));
-        if(res == 1 && ntohs(p_analyze->ether_type) == ETHERTYPE_IP)
+        if(res == 1)
             if(ntohs(p_analyze->ether_type) == ETHERTYPE_IP && ip_header->protocol == IPPROTO_TCP)
             {
                 printf("ETHERTYPE IS IP! and PROTOCOL IS TCP!\n");
