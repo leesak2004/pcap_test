@@ -19,8 +19,9 @@ int main(int argc, char *argv[])
     bpf_u_int32 net;		/* Our IP */
     pcap_t *handle;			/* Session handle */
     const u_char *pkt_data;
-
-
+    
+    if(argc < 2)
+        fprintf(stderr, "Not Enough Argument. :(\n");
     /* Open the session in promiscuous mode */
     handle = pcap_open_live(argv[1], BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
